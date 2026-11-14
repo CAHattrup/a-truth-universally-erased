@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Truth Universally Erased</title>
+<meta name="description" content="Create your own erasure poem using Jane Austen's words.">
+<style>
+  :root {
+    --paper: #f6f1e4;
+    --ink: #2b2622;
+    --bar: #141414;
+    --whiteout: #fffef8;
+    --hl: #ffe45c;
+    --accent: #7a3e2e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    background: #e9e4d8;
+    color: var(--ink);
+  }
+  header { padding: 1.5rem 1rem 0.25rem; text-align: center; }
+  h1 { margin: 0; font-weight: normal; letter-spacing: 0.04em; }
+  .subtitle { margin: 0.5rem 0 0; font-style: italic; }
+  .link-button {
+    background: none; border: none; padding: 0; margin-left: 0.4rem;
+    font: inherit; font-style: normal; color: var(--accent);
+    text-decoration: underline; cursor: pointer;
+  }
+  .link-button:hover { background: none; color: #4f2418; }
+
+  .controls {
+    max-width: 860px; margin: 1rem auto; padding: 0 1rem;
+    display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: flex-end;
+  }
+  .controls label { display: flex; flex-direction: column; font-size: 0.85rem; gap: 0.25rem; }
+  select, button {
+    font: inherit; font-size: 0.95rem; padding: 0.35rem 0.6rem;
+    border: 1px solid #8b8170; background: #fffdf7; border-radius: 4px; color: var(--ink);
+  }
+  button { cursor: pointer; }
+  button:hover { background: #f1e9d6; }
+  select:disabled { opacity: 0.45; }
+  .actions { display: flex; gap: 0.5rem; margin-left: auto; }
+  [hidden] { display: none !important; }
+
+  .tabs { max-width: 860px; margin: 0 auto; padding: 0 1rem; display: flex; gap: 0.25rem; }
+  .tabs button { border-bottom: none; border-radius: 4px 4px 0 0; background: #d9d2c2; }
+  .tabs button[aria-selected="true"] { background: var(--paper); font-weight: bold; }
+
+  .sheet { max-width: 860px; margin: 0 auto; padding: 0 1rem 1rem; }
+  .page {
+    background: var(--paper);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    padding: 2.5rem 3rem 2rem;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 1rem; line-height: 1.9;
+    min-height: 320px;
+  }
+  .page p { margin: 0 0 0.9em; }
+  .credit {
+    font-family: Georgia, serif; font-style: italic; font-size: 0.9rem;
+    color: #6b6255; margin-top: 1.5rem; border-top: 1px solid #ddd3bf; padding-top: 0.75rem;
+  }
+
+  /* Words, punctuation marks, and the spaces between them */
+  .tok { cursor: pointer; padding: 0.05em 0.08em; border-radius: 2px; }
+  .tok.punct { padding-left: 0; padding-right: 0; margin: 0 -0.05em; }
+  .tok:focus-visible { outline: 2px solid var(--accent); }
+  .sp { padding: 0.05em 0; }
+
+  /* Choose view: full text, chosen items boxed */
+  .view-choose .tok:hover { background: rgba(122, 62, 46, 0.12); }
+  .view-choose .tok.kept { background: rgba(255, 228, 92, 0.45); box-shadow: inset 0 0 0 1px #a8892a; }
+
+  /* Inked view: Blackout */
+  .view-inked.style-blackout .tok:not(.kept),
+  .view-inked.style-blackout .sp.dark { background: var(--bar); color: transparent; border-radius: 0; }
+  /* Inked view: White-out */
+  .view-inked.style-whiteout .tok:not(.kept),
+  .view-inked.style-whiteout .sp.dark { background: var(--whiteout); color: transparent; border-radius: 0; }
+  /* Inked view: Highlighter */
+  .view-inked.style-highlight .tok.kept { background: var(--hl); }
+
+  /* Poem view */
+  .poem-line { margin: 0 0 0.35em; }
+  .message { font-family: Georgia, serif; font-style: italic; color: #7a7064; }
+
+  /* "Here's how" panel */
+  dialog {
+    max-width: 520px; width: calc(100% - 2rem);
+    border: none; border-radius: 4px; padding: 2rem 2.25rem 1.5rem;
+    background: var(--paper); color: var(--ink);
+    box-shadow: 0 6px 30px rgba(0,0,0,0.3);
+  }
+  dialog::backdrop { background: rgba(40, 32, 24, 0.45); }
+  dialog h2 { margin-top: 0; font-weight: normal; }
+  dialog .close-row { text-align: right; margin-top: 1.25rem; }
+
+  footer { text-align: center; font-size: 0.8rem; color: #6b6255; padding: 0.5rem 1rem 2rem; }
+
+  @media (max-width: 600px) {
+    .page { padding: 1.5rem 1.1rem; font-size: 0.95rem; line-height: 2; }
+    .actions { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>A Truth Universally Erased</h1>
+  <p class="subtitle">Create your own poem using Jane Austen's words.
+    <button type="button" class="link-button" id="howtoBtn">Here's how</button>
+  </p>
+</header>
+
+<div class="controls">
+  <label>Novel
+    <select id="novelSelect"></select>
+  </label>
+  <label>Page
+    <select id="pageSelect"></select>
+  </label>
+  <button type="button" id="randomBtn" hidden>Another random page</button>
+  <label>Style
+    <select id="styleSelect">
+      <option value="blackout">Blackout</option>
+      <option value="whiteout">White-out</option>
+      <option value="highlight">Highlighter</option>
+    </select>
+  </label>
+  <label>Highlighter color
+    <select id="colorSelect">
+      <option value="#ffe45c">Yellow</option>
+      <option value="#ffb3cf">Pink</option>
+      <option value="#b8f0a6">Green</option>
+      <option value="#a9d8ff">Blue</option>
+    </select>
+  </label>
+  <div class="actions">
+    <button id="clearBtn" type="button">Start over</button>
+    <button id="saveBtn" type="button">Save as image</button>
+  </div>
+</div>
+
+<div class="tabs" role="tablist">
+  <button type="button" role="tab" data-view="choose" aria-selected="true">Choose words</button>
+  <button type="button" role="tab" data-view="inked" aria-selected="false">Inked page</button>
+  <button type="button" role="tab" data-view="poem" aria-selected="false">Poem only</button>
+</div>
+
+<div class="sheet">
+  <div id="page" class="page view-choose style-blackout" aria-live="polite"></div>
+</div>
+
+<footer>Texts come from the Project Gutenberg editions of Jane Austen's novels and are in the public domain.</footer>
+
+<dialog id="howto" aria-labelledby="howtoTitle">
+  <h2 id="howtoTitle">Here's how</h2>
+  <p>Select the words and punctuation marks you want to keep. Select again to let items go.</p>
+  <div class="close-row"><button type="button" id="howtoClose">Close</button></div>
+</dialog>
+
+<script src="pages.js"></script>
+<script>
+/* ==========================================================
+   NOVELS
+   Each novel's full text lives in texts/<key>.js and is
+   loaded only when someone chooses that novel.
+   ========================================================== */
+const NOVELS = [
+  { key: "pride",      title: "Pride and Prejudice",   year: 1813 },
+  { key: "sense",      title: "Sense and Sensibility", year: 1811 },
+  { key: "mansfield",  title: "Mansfield Park",        year: 1814 },
+  { key: "emma",       title: "Emma",                  year: 1815 },
+  { key: "northanger", title: "Northanger Abbey",      year: 1817 },
+  { key: "persuasion", title: "Persuasion",            year: 1817 }
+];
+
+const PAGE_WORDS = 300;   // aim for about one printed page
+const PAGE_MAX = 360;     // never go far beyond this
+const RANDOM = "random";
+
+const state = {
+  novel: NOVELS[0].key,
+  pageChoice: null,    // index into FAVORITE_PAGES, or RANDOM
+  page: null,          // { paras: [...], label: "Chapter 3" }
+  tokens: [],          // {id, text, space, para, isWord}
+  kept: new Set(),
+  view: "choose",
+  style: "blackout",
+  color: "#ffe45c"
+};
+
+const $ = id => document.getElementById(id);
+const pageEl = $("page");
+
+/* ---------- Loading novels ---------- */
+function loadNovel(key) {
+  window.AUSTEN_NOVELS = window.AUSTEN_NOVELS || {};
+  if (window.AUSTEN_NOVELS[key]) return Promise.resolve(window.AUSTEN_NOVELS[key]);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = `texts/${key}.js`;
+    s.onload = () => resolve(window.AUSTEN_NOVELS[key]);
+    s.onerror = () => reject(new Error(`Could not load texts/${key}.js`));
+    document.head.appendChild(s);
+  });
+}
+
+/* ---------- Building a page of text ---------- */
+const countWords = s => (s.match(/\S+/g) || []).length;
+
+// Split a paragraph into sentences without breaking after "Mr." and friends.
+function splitSentences(text) {
+  const raw = text.match(/[^.!?]*[.!?]+["'”’)]*\s*|[^.!?]+$/g) || [text];
+  const out = [];
+  raw.forEach(piece => {
+    const prev = out[out.length - 1];
+    if (prev && /\b(Mr|Mrs|Dr|St|Col|Capt|Esq)\.\s*$/.test(prev)) out[out.length - 1] = prev + piece;
+    else out.push(piece);
+  });
+  return out;
+}
+
+// Gather about one page of text, starting at a paragraph (and optional offset).
+function buildPage(chapter, paraIndex, offset) {
+  const paras = [];
+  let total = 0;
+  let text = chapter.paras[paraIndex].slice(offset || 0);
+  for (let i = paraIndex; i < chapter.paras.length; i++) {
+    if (i > paraIndex) text = chapter.paras[i];
+    const n = countWords(text);
+    if (total + n <= PAGE_MAX) {
+      paras.push(text);
+      total += n;
+      if (total >= PAGE_WORDS) break;
+    } else {
+      let part = "";
+      for (const sentence of splitSentences(text)) {
+        if (part && total + countWords(part + sentence) > PAGE_MAX) break;
+        part += sentence;
+        if (total + countWords(part) >= PAGE_WORDS) break;
+      }
+      if (part.trim()) paras.push(part.trim());
+      break;
+    }
+  }
+  return { paras, label: chapter.label };
+}
+
+// Treat curly and straight quotation marks (and -- and —) as the same when matching.
+function normalizeQuotes(s) {
+  return s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/--/g, "—");
+}
+
+function favoritePage(novel, fav) {
+  const needle = normalizeQuotes(fav.startsWith).replace(/\s+/g, " ").trim();
+  for (const chapter of novel.chapters) {
+    for (let p = 0; p < chapter.paras.length; p++) {
+      let idx = normalizeQuotes(chapter.paras[p]).indexOf(needle);
+      if (idx === -1) continue;
+      if (idx > 0 && /["'“‘]/.test(chapter.paras[p][idx - 1])) idx--;
+      return buildPage(chapter, p, idx);
+    }
+  }
+  return null;
+}
+
+function randomPage(novel) {
+  const weights = novel.chapters.map(c => c.paras.reduce((a, p) => a + countWords(p), 0));
+  const total = weights.reduce((a, b) => a + b, 0);
+  for (let attempt = 0; attempt < 30; attempt++) {
+    let r = Math.random() * total, c = 0;
+    while (r > weights[c]) { r -= weights[c]; c++; }
+    const chapter = novel.chapters[c];
+    const p = Math.floor(Math.random() * chapter.paras.length);
+    const remaining = chapter.paras.slice(p).reduce((a, x) => a + countWords(x), 0);
+    if (remaining >= 220 || attempt === 29) return buildPage(chapter, p, 0);
+  }
+}
+
+/* ---------- Words and punctuation ---------- */
+function tokenize(paras) {
+  const tokens = [];
+  const re = /(\s+)|([\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*)|([^\s\p{L}\p{N}])/gu;
+  paras.forEach((para, p) => {
+    let space = false, m;
+    re.lastIndex = 0;
+    while ((m = re.exec(para)) !== null) {
+      if (m[1]) { space = true; continue; }
+      tokens.push({ id: tokens.length, text: m[2] || m[3], space, para: p, isWord: Boolean(m[2]) });
+      space = false;
+    }
+  });
+  return tokens;
+}
+
+function novelInfo() { return NOVELS.find(n => n.key === state.novel); }
+
+function creditText() {
+  const n = novelInfo();
+  const where = state.page ? `, ${state.page.label}` : "";
+  return `Jane Austen, ${n.title} (${n.year})${where}`;
+}
+
+/* ---------- Drawing the page ---------- */
+function showMessage(text) {
+  pageEl.className = "page";
+  pageEl.innerHTML = "";
+  const p = document.createElement("p");
+  p.className = "message";
+  p.textContent = text;
+  pageEl.appendChild(p);
+}
+
+function addCredit() {
+  const credit = document.createElement("div");
+  credit.className = "credit";
+  credit.textContent = creditText();
+  pageEl.appendChild(credit);
+}
+
+function renderPage() {
+  pageEl.innerHTML = "";
+  let p = null, currentPara = -1;
+  state.tokens.forEach((tok, i) => {
+    if (tok.para !== currentPara) {
+      p = document.createElement("p");
+      pageEl.appendChild(p);
+      currentPara = tok.para;
+    } else if (tok.space) {
+      const sp = document.createElement("span");
+      sp.className = "sp";
+      sp.textContent = " ";
+      sp.dataset.prev = i - 1;
+      sp.dataset.next = i;
+      p.appendChild(sp);
+    }
+    const span = document.createElement("span");
+    span.className = "tok" + (tok.isWord ? "" : " punct") + (state.kept.has(tok.id) ? " kept" : "");
+    span.textContent = tok.text;
+    span.dataset.id = tok.id;
+    span.tabIndex = 0;
+    span.setAttribute("role", "button");
+    span.setAttribute("aria-pressed", state.kept.has(tok.id));
+    p.appendChild(span);
+  });
+  addCredit();
+  updateGaps();
+}
+
+// A space turns dark when the items on both sides are erased,
+// so neighboring bars join into one long bar.
+function updateGaps() {
+  pageEl.querySelectorAll(".sp").forEach(sp => {
+    sp.classList.toggle("dark", !state.kept.has(+sp.dataset.prev) && !state.kept.has(+sp.dataset.next));
+  });
+}
+
+// Each run of neighboring kept items becomes one line of the poem.
+function poemLines() {
+  const lines = [];
+  let line = "", lastId = -2;
+  state.tokens.forEach(tok => {
+    if (!state.kept.has(tok.id)) return;
+    const continues = tok.id === lastId + 1 && state.tokens[lastId].para === tok.para;
+    if (continues) line += (tok.space ? " " : "") + tok.text;
+    else { if (line) lines.push(line); line = tok.text; }
+    lastId = tok.id;
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+
+function renderPoem() {
+  pageEl.innerHTML = "";
+  const lines = poemLines();
+  if (lines.length === 0) {
+    const e = document.createElement("p");
+    e.className = "message";
+    e.textContent = "No words chosen yet. Go to “Choose words” to select the words you want to keep.";
+    pageEl.appendChild(e);
+  } else {
+    lines.forEach(l => {
+      const d = document.createElement("div");
+      d.className = "poem-line";
+      d.textContent = l;
+      pageEl.appendChild(d);
+    });
+  }
+  addCredit();
+}
+
+function render() {
+  if (!state.page) return;
+  pageEl.className = `page view-${state.view} style-${state.style}`;
+  pageEl.style.setProperty("--hl", state.color);
+  $("colorSelect").disabled = state.style !== "highlight";
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === state.view));
+  if (state.view === "poem") renderPoem(); else renderPage();
+}
+
+function setPage(page) {
+  state.page = page;
+  state.tokens = tokenize(page.paras);
+  state.kept = new Set();
+  state.view = "choose";
+  render();
+}
+
+function toggleToken(span) {
+  const id = +span.dataset.id;
+  if (state.kept.has(id)) state.kept.delete(id); else state.kept.add(id);
+  span.classList.toggle("kept", state.kept.has(id));
+  span.setAttribute("aria-pressed", state.kept.has(id));
+  updateGaps();
+}
+
+/* ---------- Choosing a novel and a page ---------- */
+function fillPageSelect() {
+  const sel = $("pageSelect");
+  sel.innerHTML = "";
+  FAVORITE_PAGES.forEach((fav, i) => {
+    if (fav.novel !== state.novel) return;
+    const o = document.createElement("option");
+    o.value = i;
+    o.textContent = fav.name;
+    sel.appendChild(o);
+  });
+  const r = document.createElement("option");
+  r.value = RANDOM;
+  r.textContent = "A random page";
+  sel.appendChild(r);
+  state.pageChoice = sel.options[0].value;
+}
+
+async function showChosenPage() {
+  $("randomBtn").hidden = state.pageChoice !== RANDOM;
+  showMessage("Opening the book…");
+  let novel;
+  try {
+    novel = await loadNovel(state.novel);
+  } catch (err) {
+    showMessage("Sorry, this novel could not be opened. " + err.message);
+    return;
+  }
+  if (state.pageChoice === RANDOM) {
+    setPage(randomPage(novel));
+  } else {
+    const fav = FAVORITE_PAGES[+state.pageChoice];
+    const page = favoritePage(novel, fav);
+    if (page) setPage(page);
+    else showMessage(`Couldn't find the words “${fav.startsWith}” in ${novelInfo().title}. Check the spelling in pages.js.`);
+  }
+}
+
+/* ---------- Save as image ---------- */
+function saveImage() {
+  if (!state.page) return;
+  const scale = 2;
+  const W = 1000, pad = 70, fs = 22, lh = 38, paraGap = 14;
+  const font = `${fs}px "Courier New", Courier, monospace`;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  ctx.font = font;
+  const spaceW = ctx.measureText(" ").width;
+  const maxX = W - pad;
+
+  const rows = [];
+  if (state.view === "poem") {
+    const lines = poemLines();
+    (lines.length ? lines : ["(no words chosen)"]).forEach(line => {
+      let row = "";
+      line.split(" ").forEach(word => {
+        const test = row ? row + " " + word : word;
+        if (ctx.measureText(test).width > maxX - pad && row) { rows.push({ text: row, gapAfter: 0 }); row = "  " + word; }
+        else row = test;
+      });
+      rows.push({ text: row, gapAfter: 0 });
+    });
+  } else {
+    let row = { items: [], gapAfter: 0 }, x = pad;
+    let currentPara = state.tokens.length ? state.tokens[0].para : 0;
+    state.tokens.forEach((tok, i) => {
+      if (tok.para !== currentPara) {
+        row.gapAfter = paraGap; rows.push(row);
+        row = { items: [], gapAfter: 0 }; x = pad; currentPara = tok.para;
+      }
+      const w = ctx.measureText(tok.text).width;
+      let sw = (tok.space && x > pad) ? spaceW : 0;
+      if (x + sw + w > maxX && x > pad) { rows.push(row); row = { items: [], gapAfter: 0 }; x = pad; sw = 0; }
+      if (sw) { row.items.push({ kind: "sp", prev: i - 1, next: i, x, w: sw }); x += sw; }
+      row.items.push({ kind: "tok", tok, x, w });
+      x += w;
+    });
+    rows.push(row);
+  }
+
+  let H = pad;
+  rows.forEach(r => { H += lh + r.gapAfter; });
+  H += 30 + 40 + pad * 0.6;
+  canvas.width = W * scale;
+  canvas.height = H * scale;
+  ctx.scale(scale, scale);
+  ctx.fillStyle = "#f6f1e4";
+  ctx.fillRect(0, 0, W, H);
+  ctx.font = font;
+
+  const style = state.view === "poem" ? "plain" : state.style;
+  let y = pad + fs;
+  rows.forEach(r => {
+    if (r.text !== undefined) {
+      ctx.fillStyle = "#2b2622";
+      ctx.fillText(r.text, pad, y);
+    } else {
+      r.items.forEach(item => {
+        const top = Math.round(y - fs * 0.85), h = Math.round(fs * 1.15);
+        const bx = Math.floor(item.x) - 1, bw = Math.ceil(item.w) + 3;
+        const kept = item.kind === "tok"
+          ? state.kept.has(item.tok.id)
+          : (state.kept.has(item.prev) || state.kept.has(item.next));
+        if (style === "blackout" && !kept) { ctx.fillStyle = "#141414"; ctx.fillRect(bx, top, bw, h); }
+        else if (style === "whiteout" && !kept) { ctx.fillStyle = "#fffef8"; ctx.fillRect(bx, top, bw, h); }
+        else if (item.kind === "tok") {
+          if (style === "highlight" && kept) { ctx.fillStyle = state.color; ctx.fillRect(item.x - 2, top, item.w + 4, h); }
+          ctx.fillStyle = "#2b2622";
+          ctx.fillText(item.tok.text, item.x, y);
+        }
+      });
+    }
+    y += lh + r.gapAfter;
+  });
+
+  y += 10;
+  ctx.strokeStyle = "#ddd3bf";
+  ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke();
+  ctx.font = "italic 18px Georgia, serif";
+  ctx.fillStyle = "#6b6255";
+  ctx.fillText(creditText() + "  ·  A Truth Universally Erased", pad, y + 32);
+
+  canvas.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "a-truth-universally-erased.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }, "image/png");
+}
+
+/* ---------- Wire up controls ---------- */
+NOVELS.forEach(n => {
+  const o = document.createElement("option");
+  o.value = n.key;
+  o.textContent = n.title;
+  $("novelSelect").appendChild(o);
+});
+
+$("novelSelect").addEventListener("change", e => { state.novel = e.target.value; fillPageSelect(); showChosenPage(); });
+$("pageSelect").addEventListener("change", e => { state.pageChoice = e.target.value; showChosenPage(); });
+$("randomBtn").addEventListener("click", showChosenPage);
+$("styleSelect").addEventListener("change", e => { state.style = e.target.value; render(); });
+$("colorSelect").addEventListener("change", e => { state.color = e.target.value; render(); });
+$("clearBtn").addEventListener("click", () => { state.kept = new Set(); render(); });
+$("saveBtn").addEventListener("click", saveImage);
+$("howtoBtn").addEventListener("click", () => $("howto").showModal());
+$("howtoClose").addEventListener("click", () => $("howto").close());
+
+document.querySelectorAll(".tabs button").forEach(b => {
+  b.addEventListener("click", () => { state.view = b.dataset.view; render(); });
+});
+pageEl.addEventListener("click", e => {
+  const span = e.target.closest(".tok");
+  if (span) toggleToken(span);
+});
+pageEl.addEventListener("keydown", e => {
+  const span = e.target.closest(".tok");
+  if (span && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggleToken(span); }
+});
+
+fillPageSelect();
+showChosenPage();
+</script>
+</body>
+</html>
