@@ -1,12 +1,12 @@
 name: Suggest a favorite page
 description: Suggest a page from a Jane Austen novel for everyone to make poems from.
 title: "New page: "
-labels: ["new page"]
+labels: ["new page", "no coding needed"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for suggesting a page! Tell us which novel it's from, how the page begins, and what to call it. You don't need any technical knowledge.
+        Thank you for suggesting a page! Tell me which novel it's from, how the page begins, and what to call it.
 
   - type: dropdown
     id: novel
@@ -35,7 +35,7 @@ body:
     id: chapter
     attributes:
       label: Which chapter is it in? (optional)
-      description: If you know it, the chapter number helps us find the page faster.
+      description: If you know it, the chapter number helps me find the page faster.
       placeholder: "not sure what chapter it's in"
     validations:
       required: false
@@ -44,7 +44,7 @@ body:
     id: page-name
     attributes:
       label: What should we call this page?
-      description: A short name that will appear in the tool's list of page choices. We may adjust its structure to match the other names in the list.
+      description: A short name that will appear in the tool's list of page choices. I may adjust its structure to match the other names in the list.
       placeholder: "Mr. Darcy proposes"
     validations:
       required: true
@@ -53,6 +53,6 @@ body:
     id: why
     attributes:
       label: Why do you love this page? (optional)
-      description: We'd love to know, but you can leave this blank if you want.
+      description: I'd love to know, but you can leave this blank if you want.
     validations:
       required: false
