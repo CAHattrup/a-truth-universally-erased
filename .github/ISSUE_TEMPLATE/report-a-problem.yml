@@ -1,5 +1,5 @@
 name: Report a problem
-description: Tell us about something that isn't working or looks wrong.
+description: Tell me about something that isn't working or looks wrong.
 title: "Problem: "
 labels: ["bug"]
 body:
