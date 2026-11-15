@@ -1,0 +1,93 @@
+name: Report a problem
+description: Tell us about something that isn't working or looks wrong.
+title: "Problem: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping make the tool better! Tell me what happened.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the problem.
+      placeholder: "I selected Save as image, but nothing happened."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: What were you doing just before it happened? (optional)
+      description: List the steps if you remember them, so I can try to make the same thing happen.
+      placeholder: |
+        1. Chose Emma and a random page
+        2. Selected some words
+        3. Went to Poem only
+        4. Selected Save as image
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen? (optional)
+      placeholder: "I expected the image to save to my phone."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: view
+    attributes:
+      label: Which view were you in? (optional)
+      options:
+        - Choose words
+        - Inked page
+        - Poem only
+        - I'm not sure
+    validations:
+      required: false
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: What kind of device were you using?
+      options:
+        - Phone
+        - Tablet
+        - Computer
+    validations:
+      required: false
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Which web browser were you using?
+      options:
+        - Chrome
+        - Safari
+        - Firefox
+        - Edge
+        - Other
+        - I'm not sure
+    validations:
+      required: false
+
+  - type: input
+    id: system
+    attributes:
+      label: Which device or operating system? (optional)
+      description: For example, the phone model or system name.
+      placeholder: "Android phone, iPhone 13, Windows 11, Mac"
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot (optional)
+      description: If you have a screenshot of the problem, drag it into this box or paste it here.
+    validations:
+      required: false
