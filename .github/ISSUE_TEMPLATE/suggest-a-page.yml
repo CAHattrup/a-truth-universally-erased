@@ -27,7 +27,7 @@ body:
     attributes:
       label: How does the page begin?
       description: Type the first 6 to 10 words exactly as they appear in the book, so we can find the page. Any edition is fine.
-      placeholder: "It is a truth universally acknowledged"
+      placeholder: "In vain I have struggled. It will not do."
     validations:
       required: true
 
@@ -36,7 +36,7 @@ body:
     attributes:
       label: Which chapter is it in? (optional)
       description: If you know it, the chapter number helps us find the page faster.
-      placeholder: "Volume 1, Chapter 1"
+      placeholder: "not sure what chapter it's in"
     validations:
       required: false
 
@@ -44,8 +44,8 @@ body:
     id: page-name
     attributes:
       label: What should we call this page?
-      description: A short name that will appear in the tool's list of favorite pages.
-      placeholder: "The famous first line"
+      description: A short name that will appear in the tool's list of page choices. We may adjust its structure to match the other names in the list.
+      placeholder: "Mr. Darcy proposes"
     validations:
       required: true
 
@@ -53,6 +53,6 @@ body:
     id: why
     attributes:
       label: Why do you love this page? (optional)
-      description: We'd love to know, but you can leave this blank.
+      description: We'd love to know, but you can leave this blank if you want.
     validations:
       required: false
