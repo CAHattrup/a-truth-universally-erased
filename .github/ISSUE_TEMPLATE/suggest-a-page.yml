@@ -1,0 +1,58 @@
+name: Suggest a favorite page
+description: Suggest a page from a Jane Austen novel for everyone to make poems from.
+title: "New page: "
+labels: ["new page"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a page! Tell us which novel it's from, how the page begins, and what to call it. You don't need any technical knowledge.
+
+  - type: dropdown
+    id: novel
+    attributes:
+      label: Which novel is the page from?
+      options:
+        - Pride and Prejudice
+        - Sense and Sensibility
+        - Mansfield Park
+        - Emma
+        - Northanger Abbey
+        - Persuasion
+    validations:
+      required: true
+
+  - type: input
+    id: first-words
+    attributes:
+      label: How does the page begin?
+      description: Type the first 6 to 10 words exactly as they appear in the book, so we can find the page. Any edition is fine.
+      placeholder: "It is a truth universally acknowledged"
+    validations:
+      required: true
+
+  - type: input
+    id: chapter
+    attributes:
+      label: Which chapter is it in? (optional)
+      description: If you know it, the chapter number helps us find the page faster.
+      placeholder: "Volume 1, Chapter 1"
+    validations:
+      required: false
+
+  - type: input
+    id: page-name
+    attributes:
+      label: What should we call this page?
+      description: A short name that will appear in the tool's list of favorite pages.
+      placeholder: "The famous first line"
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why do you love this page? (optional)
+      description: We'd love to know, but you can leave this blank.
+    validations:
+      required: false
